@@ -1,0 +1,24 @@
+{
+  "name": "rxpulse",
+  "version": "1.0.0",
+  "description": "drug innventory",
+  "homepage": "https://github.com/gycodexz/rxpulse#readme",
+  "bugs": {
+    "url": "https://github.com/gycodexz/rxpulse/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gycodexz/rxpulse.git"
+  },
+  "license": "ISC",
+  "author": "Lakshya",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "mongoose": "^9.10.2"
+  }
+}
