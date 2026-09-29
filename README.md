@@ -1,11 +1,6 @@
 # RxPulse
 ### Drug Inventory & Supply Chain Tracking System
 
-Mini project (Sem 3) — React + FastAPI + MongoDB.
-
-> "Right Quantity of Right Product on Right Place at Right Time in Right Condition
-> at Right Cost for Right People."
-
 ---
 
 ## 1. Tech stack
@@ -142,7 +137,7 @@ got there (every in/out movement, who performed it, and when).
 
 ---
 
-## 5. Notable design choices (useful to explain to your professor)
+## 5. Notable design choices
 
 - **JWT auth** — stateless tokens, so the API scales without server-side
   sessions. Passwords are hashed with bcrypt and never stored or returned in
