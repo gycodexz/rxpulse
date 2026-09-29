@@ -1,4 +1,5 @@
-# RxPulse — Drug Inventory & Supply Chain Tracking System
+# RxPulse
+### Drug Inventory & Supply Chain Tracking System
 
 Mini project (Sem 3) — React + FastAPI + MongoDB.
 
