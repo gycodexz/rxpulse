@@ -136,7 +136,7 @@ got there (every in/out movement, who performed it, and when).
 
 ---
 
-## 5. Notable design choices (useful to explain to your professor)
+## 5. Notable design choices
 
 - **JWT auth** — stateless tokens, so the API scales without server-side
   sessions. Passwords are hashed with bcrypt and never stored or returned in
