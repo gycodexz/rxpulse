@@ -3,8 +3,8 @@ from bson import ObjectId
 from bson.errors import InvalidId
 import random
 
-from app.database import distributions_col, institutions_col, inventory_col, drugs_col
-from app.models import DistributionIn, DistributionStatusUpdate
+from app.database import distributions_col, institutions_col, inventory_col, drugs_col, requisitions_col
+from app.models import DistributionIn, DistributionStatusUpdate, HospitalRequisitionIn
 from app.utils import serialize, serialize_list, now_iso
 from app.auth import get_current_user, require_roles
 
@@ -17,9 +17,18 @@ def generate_dist_number() -> str:
     return f"DIST-{year}-{random.randint(1000, 9999)}"
 
 
+def generate_req_number() -> str:
+    from datetime import datetime
+    year = datetime.utcnow().year
+    return f"REQ-{year}-{random.randint(1000, 9999)}"
+
+
 @router.get("")
 async def list_distributions(current_user: dict = Depends(get_current_user)):
-    items = await distributions_col.find().sort("dispatch_date", -1).to_list(500)
+    query = {}
+    if current_user.get("role") == "institution_staff" and current_user.get("institution_id"):
+        query = {"institution_id": current_user["institution_id"]}
+    items = await distributions_col.find(query).sort("dispatch_date", -1).to_list(500)
     return serialize_list(items)
 
 
@@ -49,7 +58,7 @@ async def create_distribution(payload: DistributionIn, current_user: dict = Depe
     result = await distributions_col.insert_one(doc)
     doc["_id"] = result.inserted_id
 
-    # Log a matching "out" inventory transaction for every item, and reduce drug stock
+    # Log matching "out" inventory transaction for every item and reduce drug stock
     for item in payload.items:
         try:
             drug_oid = ObjectId(item.drug_id)
@@ -88,9 +97,48 @@ async def update_status(dist_id: str, payload: DistributionStatusUpdate, current
     if payload.status == "delivered":
         update_fields["delivery_date"] = now_iso()
         update_fields["received_by"] = current_user["_id"]
+    if payload.acknowledgment_notes:
+        update_fields["acknowledgment_notes"] = payload.acknowledgment_notes
 
     result = await distributions_col.update_one({"_id": oid}, {"$set": update_fields})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Distribution not found")
     item = await distributions_col.find_one({"_id": oid})
     return serialize(item)
+
+
+# Hospital Requisitions / Indent Cart
+@router.post("/requisitions")
+async def create_requisition(payload: HospitalRequisitionIn, current_user: dict = Depends(get_current_user)):
+    institution_id = payload.institution_id or current_user.get("institution_id")
+    institution_name = payload.institution_name
+    if not institution_name and institution_id:
+        try:
+            inst = await institutions_col.find_one({"_id": ObjectId(institution_id)})
+            if inst:
+                institution_name = inst["name"]
+        except Exception:
+            pass
+
+    doc = {
+        "requisition_number": generate_req_number(),
+        "institution_id": institution_id,
+        "institution_name": institution_name or "Hospital Dispensary",
+        "department": payload.department,
+        "urgency": payload.urgency,
+        "requested_by": current_user["_id"],
+        "requester_name": current_user.get("name", "Staff Nurse"),
+        "created_at": now_iso(),
+        "status": "submitted",  # submitted, approved, fulfilled, rejected
+        "items": [it.model_dump() for it in payload.items],
+        "notes": payload.notes,
+    }
+    result = await requisitions_col.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return serialize(doc)
+
+
+@router.get("/requisitions/all")
+async def list_requisitions(current_user: dict = Depends(get_current_user)):
+    reqs = await requisitions_col.find().sort("created_at", -1).to_list(200)
+    return serialize_list(reqs)

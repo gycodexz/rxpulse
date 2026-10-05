@@ -48,3 +48,36 @@ async def login(payload: LoginRequest):
     safe_user = serialize(user)
     safe_user.pop("password", None)
     return {"access_token": token, "user": safe_user}
+
+
+@router.post("/demo-switch")
+async def demo_switch(role: str):
+    if role not in ALLOWED_ROLES:
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    user = await users_col.find_one({"role": role, "is_active": True})
+    if not user:
+        demo_names = {
+            "admin": ("Dr. Ananya Roy (Central Authority)", "admin@rxpulse.org"),
+            "pharmacist": ("Vikram Sen (Chief Pharmacist)", "pharmacist@rxpulse.org"),
+            "vendor": ("Sun Pharma Distribution Lead", "vendor@rxpulse.org"),
+            "institution_staff": ("Nurse Priya Sharma (Apex Hospital)", "staff@rxpulse.org"),
+        }
+        name, email = demo_names.get(role, (f"Demo {role.title()}", f"{role}@rxpulse.org"))
+        doc = {
+            "name": name,
+            "email": email,
+            "password": hash_password("demo123456"),
+            "role": role,
+            "is_active": True,
+            "created_at": now_iso(),
+        }
+        res = await users_col.insert_one(doc)
+        doc["_id"] = res.inserted_id
+        user = doc
+
+    token = create_access_token({"sub": str(user["_id"]), "role": user["role"]})
+    safe_user = serialize(user)
+    safe_user.pop("password", None)
+    return {"access_token": token, "user": safe_user}
+
