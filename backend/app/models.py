@@ -93,6 +93,9 @@ class PurchaseOrderIn(BaseModel):
 
 class PurchaseOrderStatusUpdate(BaseModel):
     status: str  # Can be pending / approved / shipped / delivered / cancelled
+    courier_name: Optional[str] = None
+    tracking_number: Optional[str] = None
+    notes: Optional[str] = None
 
 
 # Inventory
@@ -129,3 +132,54 @@ class DistributionIn(BaseModel):
 
 class DistributionStatusUpdate(BaseModel):
     status: str  # Can be dispatched / delivered / returned
+    acknowledgment_notes: Optional[str] = None
+
+
+# Requisitions from Hospital Staff
+class RequisitionItem(BaseModel):
+    drug_id: str
+    drug_name: str
+    requested_quantity: int
+    unit: str
+
+
+class HospitalRequisitionIn(BaseModel):
+    institution_id: Optional[str] = None
+    institution_name: Optional[str] = None
+    department: str = "General"
+    urgency: str = "normal"  # normal, urgent, emergency
+    items: List[RequisitionItem]
+    notes: Optional[str] = None
+
+
+# Vendor Supply Quote / Cart Submission
+class VendorSupplyItem(BaseModel):
+    drug_id: str
+    drug_name: str
+    quantity: int
+    unit: str
+    price_per_unit: float
+    total_price: float
+    batch_number: Optional[str] = None
+    expiry_date: Optional[str] = None
+
+
+class VendorSupplyQuoteIn(BaseModel):
+    vendor_id: Optional[str] = None
+    vendor_name: Optional[str] = None
+    items: List[VendorSupplyItem]
+    expected_dispatch_date: Optional[str] = None
+    notes: Optional[str] = None
+
+
+# Ward / Patient Dispensing
+class ConsumptionLogIn(BaseModel):
+    drug_id: str
+    drug_name: str
+    ward_name: str
+    patient_identifier: Optional[str] = None
+    quantity: int
+    unit: str
+    prescribed_by: Optional[str] = None
+    notes: Optional[str] = None
+

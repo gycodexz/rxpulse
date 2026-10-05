@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import ensure_indexes
 from app.routers import (
     auth_routes, institutions, vendors, drugs,
-    purchase_orders, inventory, distributions, dashboard, users,
+    purchase_orders, inventory, distributions, dashboard, users, consumption,
 )
 
 app = FastAPI(
@@ -41,3 +41,5 @@ app.include_router(purchase_orders.router)
 app.include_router(inventory.router)
 app.include_router(distributions.router)
 app.include_router(dashboard.router)
+app.include_router(consumption.router)
+
